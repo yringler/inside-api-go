@@ -3,6 +3,7 @@ package main
 import (
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"sync"
@@ -15,14 +16,15 @@ type Response struct {
 	Source string
 }
 
-const dropboxFolder = "inside_chassidus/"
+const dropboxFolder = "/insidechassidus/"
 const dropboxFileName = "data.json.gz"
 const uploadPath = dropboxFolder + dropboxFileName
 
 func main() {
+	lackdr.AccessToken = os.Getenv("dropbox_token")
+
 	mut := sync.Mutex{}
 	isFetching := false
-	lackdr.AccessToken = os.Getenv("dropbox_token")
 
 	/*
 		If the data was already uploaded to dropbox, get a link and sent it back.
@@ -33,7 +35,7 @@ func main() {
 	getData := http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		if link, err := lackdr.GetShareLink(uploadPath); err != nil {
+		if link, err := lackdr.GetShareLink(uploadPath); link != "" && err == nil {
 			responseJSON, _ := json.Marshal(Response{
 				Source: link,
 			})
@@ -57,23 +59,34 @@ func main() {
 				go func() {
 					scraper := insidescraper.InsideScraper{}
 
+					fmt.Println("Started scraping")
+
 					if err := scraper.Scrape(); err != nil {
 						panic(err)
 					}
+
+					fmt.Println("Finished scraping")
 
 					if err := createDataFile(scraper.Site()); err != nil {
 						panic(err)
 					}
 
+					fmt.Println("Crated data file")
+
 					if _, err = lackdr.UploadFile(dropboxFileName, dropboxFolder); err != nil {
 						panic(err)
 					}
+
+					fmt.Println("Uploaded data file! Success.")
 				}()
 			}
 		}
 	})
 
 	http.Handle("/", getData)
+
+	port := os.Getenv("PORT")
+	http.ListenAndServe(":"+port, nil)
 }
 
 // Crate data file (gzipped new line seperated JSON objects). Return name, and err if error
@@ -95,6 +108,7 @@ func createDataFile(site []insidescraper.SiteSection) error {
 	defer file.Close()
 
 	zipper := gzip.NewWriter(file)
+	defer zipper.Close()
 
 	if _, err = zipper.Write([]byte(partedJSON)); err != nil {
 		return err
