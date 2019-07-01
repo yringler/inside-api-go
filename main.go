@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"os"
+	"sync"
 
 	lackdr "github.com/yringler/go-drop-lack"
 	insidescraper "github.com/yringler/inside-chassidus-scraper"
@@ -53,12 +53,12 @@ func main() {
 				// Trigger scarpe/upload.
 				go func() {
 					scraper := insidescraper.InsideScraper{}
-					err := scraper.Scrape()
 
-					if err != nil {
+					if err := scraper.Scrape(); err != nil {
 						panic(err)
 					}
 
+					siteData := scraper.Site()
 				}()
 			}
 		}
