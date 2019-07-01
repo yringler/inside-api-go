@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"os"
 
+	lackdr "github.com/yringler/go-drop-lack"
 	insidescraper "github.com/yringler/inside-chassidus-scraper"
 )
 
@@ -17,6 +19,7 @@ const uploadPath = "inside_chassidus/data.json"
 func main() {
 	mut := sync.Mutex{}
 	isFetching := false
+	lackdr.AccessToken = os.Getenv("dropbox_token")
 
 	/*
 		If the data was already uploaded to dropbox, get a link and sent it back.
@@ -27,7 +30,7 @@ func main() {
 	getData := http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		if link, err := getShareLink(uploadPath); err != nil {
+		if link, err := lackdr.GetShareLink(uploadPath); err != nil {
 			responseJSON, _ := json.Marshal(Response{
 				Source: link,
 			})

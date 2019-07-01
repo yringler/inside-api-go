@@ -20,6 +20,12 @@ github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca h1:NugYot0LIVPxT
 github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca/go.mod h1:uugorj2VCxiV1x+LzaIdVa9b4S4qGAcH6cbhh4qVxOU=
 github.com/temoto/robotstxt v0.0.0-20180810133444-97ee4a9ee6ea h1:hH8P1IiDpzRU6ZDbDh/RDnVuezi2oOXJpApa06M0zyI=
 github.com/temoto/robotstxt v0.0.0-20180810133444-97ee4a9ee6ea/go.mod h1:aOux3gHPCftJ3KHq6Pz/AlDjYJ7Y+yKfm1gU/3B0u04=
+github.com/yringler/go-drop-lack v0.0.0-20190701152311-84f856e0dd3c h1:7Vf6b/xaEv0ZqxNwepyGwib7NkaQ3GzZiALV+E98EgQ=
+github.com/yringler/go-drop-lack v0.0.0-20190701152311-84f856e0dd3c/go.mod h1:8Iz+SM5csAr6yOvxgTRj4JuDNsaBsIWZ4tOFRR01IjE=
+github.com/yringler/go-drop-lack v0.0.0-20190701152648-8cc98b1457aa h1:S2bN3DDoRsZ5Qzh2fxYsnhakGZJzFqM1ZdUp4XW3g+g=
+github.com/yringler/go-drop-lack v0.0.0-20190701152648-8cc98b1457aa/go.mod h1:8Iz+SM5csAr6yOvxgTRj4JuDNsaBsIWZ4tOFRR01IjE=
+github.com/yringler/go-drop-lack v0.0.0-20190701152814-bdbe042f8f6a h1:X+B/QK3MrYBGXrWoHKvQeG+XJGchLmthw1iC9Oz3tB8=
+github.com/yringler/go-drop-lack v0.0.0-20190701152814-bdbe042f8f6a/go.mod h1:8Iz+SM5csAr6yOvxgTRj4JuDNsaBsIWZ4tOFRR01IjE=
 github.com/yringler/inside-chassidus-scraper v0.0.0-20190630185950-bc231878c1c8 h1:MOlUn64vh/eKpz6CmesvBIbsQtsQ5D6F5zpZj4LXcwo=
 github.com/yringler/inside-chassidus-scraper v0.0.0-20190630185950-bc231878c1c8/go.mod h1:TAR4RCe79O0KsgEbaWiUQl0fDuGVvC6D19k8OwRiwbw=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
