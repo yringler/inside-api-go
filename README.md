@@ -1,12 +1,12 @@
 # inside-api
-API to get data about inside chasidus classes
+API to ensure app has latest version of data
 
 # Plan
 
-For now, really simple. 
+There will one endpoint to get data. App will pass in a date parameter. If that date is earlier than current data date, redirects to dropbox json file.
 
-Scrapes inside chasidus and uploads dart-ready huge JSON file (each line a seperate JSON object, for easy streaming) (gzipped) if it wasn't already done.
+If it's after, returns NOCONTENT
 
-If the data is on dropbox already, return a temporary 3 hour link to the file.
+Another endpoint will allow to update current data date. It will take a singular query paramter with the current data date.
 
-Eventually this will support incremental updates (with time stamps or something), but that effort isn't justifed for an MVP.
+Actually, I might just put both at one endpoint
