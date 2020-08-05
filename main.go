@@ -28,6 +28,7 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			writeBuffer.WriteString(err.Error())
 			w.Write(writeBuffer.Bytes())
+			return
 		}
 
 		redisUnix, err := rdb.Get(ctx, "current_date").Int64()
