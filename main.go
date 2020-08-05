@@ -1,118 +1,66 @@
 package main
 
 import (
-	"compress/gzip"
-	"encoding/json"
+	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"os"
-	"sync"
+	"strconv"
+	"time"
 
-	lackdr "github.com/yringler/go-drop-lack"
-	insidescraper "github.com/yringler/inside-chassidus-scraper"
+	"github.com/go-redis/redis/v8"
 )
 
-type Response struct {
-	Source string
-}
-
-const dropboxFolder = "/insidechassidus/"
-const dropboxFileName = "data.json.gz"
-const uploadPath = dropboxFolder + dropboxFileName
-
 func main() {
-	lackdr.AccessToken = os.Getenv("dropbox_token")
+	ctx := context.Background()
+	redisURL := os.Getenv("REDIS_URL")
+	dataURL := os.Getenv("DATA_URL")
+	redisOptions, _ := redis.ParseURL(redisURL)
+	rdb := redis.NewClient(redisOptions)
 
-	mut := sync.Mutex{}
-	isFetching := false
+	http.Handle("/check", http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		queryTime := request.URL.Query().Get("date")
+		unixTime, _ := strconv.ParseInt(queryTime, 10, 64)
+		requesterVersionDate := time.Unix(unixTime, 0)
+		writeBuffer := bytes.Buffer{}
 
-	/*
-		If the data was already uploaded to dropbox, get a link and sent it back.
-		Otherwise, return "not ready".
-		Trigger crawl/upload if hasn't been done already.
-	*/
-
-	getData := http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		if link, err := lackdr.GetShareLink(uploadPath); link != "" && err == nil {
-			responseJSON, _ := json.Marshal(Response{
-				Source: link,
-			})
-
-			w.Write(responseJSON)
-		} else {
-			w.WriteHeader(http.StatusServiceUnavailable)
-
-			if isFetching {
-				return
-			}
-
-			// Make sure 2 requests don't both trigger scrapes.
-			mut.Lock()
-			defer mut.Unlock()
-
-			if !isFetching {
-				isFetching = true
-
-				// Trigger scarpe/upload.
-				go func() {
-					scraper := insidescraper.InsideScraper{}
-
-					fmt.Println("Started scraping")
-
-					if err := scraper.Scrape(); err != nil {
-						panic(err)
-					}
-
-					fmt.Println("Finished scraping")
-
-					if err := createDataFile(scraper.Site()); err != nil {
-						panic(err)
-					}
-
-					fmt.Println("Crated data file")
-
-					if _, err = lackdr.UploadFile(dropboxFileName, dropboxFolder); err != nil {
-						panic(err)
-					}
-
-					fmt.Println("Uploaded data file! Success.")
-				}()
-			}
+		currentDate, err := rdb.Get(ctx, "current_date").Time()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(writeBuffer.Bytes())
+			return
 		}
-	})
 
-	http.Handle("/", getData)
+		if requesterVersionDate.Before(currentDate) {
+			http.Redirect(w, request, dataURL, http.StatusPermanentRedirect)
+		} else {
+			w.WriteHeader(http.StatusNoContent)
+			w.Write(writeBuffer.Bytes())
+		}
+	}))
+
+	password := os.Getenv("AUTH")
+
+	http.Handle("/update", http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		writeBuffer := bytes.Buffer{}
+
+		requestPassword := request.URL.Query().Get("auth")
+
+		if requestPassword != password {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write(writeBuffer.Bytes())
+			return
+		}
+
+		queryTime := request.URL.Query().Get("date")
+		unixTime, _ := strconv.ParseInt(queryTime, 10, 64)
+		requesterVersionDate := time.Unix(unixTime, 0)
+		if response := rdb.Set(ctx, "current_date", requesterVersionDate, 0); response.Err() != nil {
+			fmt.Println(response.Err())
+		}
+	}))
 
 	port := os.Getenv("PORT")
 	http.ListenAndServe(":"+port, nil)
-}
-
-// Crate data file (gzipped new line seperated JSON objects). Return name, and err if error
-func createDataFile(site []insidescraper.SiteSection) error {
-	var partedJSON string
-
-	for _, value := range site {
-		sectionBytes, _ := json.Marshal(value)
-		sectionJSON := string(sectionBytes) + "\n"
-		partedJSON += sectionJSON
-	}
-
-	file, err := os.Create(dropboxFileName)
-
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	zipper := gzip.NewWriter(file)
-	defer zipper.Close()
-
-	if _, err = zipper.Write([]byte(partedJSON)); err != nil {
-		return err
-	}
-
-	return nil
 }

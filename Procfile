@@ -1,1 +1,1 @@
-web: inside-api
+web: inside-api-go
