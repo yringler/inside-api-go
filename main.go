@@ -68,6 +68,8 @@ func main() {
 			writeBuffer.WriteString(response.Err().Error())
 		}
 
+		w.WriteHeader(http.StatusNoContent)
+		writeBuffer.WriteString("success")
 		w.Write(writeBuffer.Bytes())
 	}))
 
