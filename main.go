@@ -27,6 +27,7 @@ func main() {
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			writeBuffer.WriteString(err.Error())
 			w.Write(writeBuffer.Bytes())
 		}
 
@@ -35,6 +36,7 @@ func main() {
 		currentDate, err := rdb.Get(ctx, "current_date").Time()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			writeBuffer.WriteString(err.Error())
 			w.Write(writeBuffer.Bytes())
 			return
 		}
