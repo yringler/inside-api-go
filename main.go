@@ -21,13 +21,19 @@ func main() {
 
 	http.Handle("/check", http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		queryTime := request.URL.Query().Get("date")
-		unixTime, _ := strconv.ParseInt(queryTime, 10, 64)
-		requesterVersionDate := time.Unix(unixTime, 0)
+		unixTime, err := strconv.ParseInt(queryTime, 10, 64)
 		writeBuffer := bytes.Buffer{}
+
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(writeBuffer.Bytes())
+		}
+
+		requesterVersionDate := time.Unix(unixTime, 0)
 
 		currentDate, err := rdb.Get(ctx, "current_date").Time()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(writeBuffer.Bytes())
 			return
 		}
