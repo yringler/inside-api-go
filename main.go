@@ -21,7 +21,7 @@ func main() {
 
 	http.Handle("/check", http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		queryTime := request.URL.Query().Get("date")
-		unixTime, err := strconv.ParseInt(queryTime, 10, 64)
+		requestersUnix, err := strconv.ParseInt(queryTime, 10, 64)
 		writeBuffer := bytes.Buffer{}
 
 		if err != nil {
@@ -30,19 +30,16 @@ func main() {
 			w.Write(writeBuffer.Bytes())
 		}
 
-		requesterVersionDate := time.Unix(unixTime, 0)
-
-		currentDateUnix, err := rdb.Get(ctx, "current_date").Int64()
+		redisUnix, err := rdb.Get(ctx, "current_date").Int64()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			writeBuffer.WriteString(err.Error())
 			w.Write(writeBuffer.Bytes())
 			return
 		}
-		currentDate := time.Unix(currentDateUnix, 0)
 
-		if requesterVersionDate.Before(currentDate) {
-			http.Redirect(w, request, dataURL, http.StatusPermanentRedirect)
+		if redisUnix > requestersUnix {
+			http.Redirect(w, request, dataURL, http.StatusTemporaryRedirect)
 		} else {
 			w.WriteHeader(http.StatusNoContent)
 			w.Write(writeBuffer.Bytes())
