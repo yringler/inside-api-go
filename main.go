@@ -17,6 +17,7 @@ func main() {
 	redisURL := os.Getenv("REDIS_URL")
 	dataURL := os.Getenv("DATA_URL")
 	redisOptions, _ := redis.ParseURL(redisURL)
+	redisOptions.Username = ""
 	rdb := redis.NewClient(redisOptions)
 
 	http.Handle("/check", http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
