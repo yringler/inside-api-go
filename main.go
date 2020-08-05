@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -65,10 +64,13 @@ func main() {
 
 		queryTime := request.URL.Query().Get("date")
 		unixTime, _ := strconv.ParseInt(queryTime, 10, 64)
-		requesterVersionDate := time.Unix(unixTime, 0)
-		if response := rdb.Set(ctx, "current_date", requesterVersionDate.Unix(), 0); response.Err() != nil {
-			fmt.Println(response.Err())
+		newVersionDate := time.Unix(unixTime, 0)
+		if response := rdb.Set(ctx, "current_date", newVersionDate.Unix(), 0); response.Err() != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			writeBuffer.WriteString(response.Err().Error())
 		}
+
+		w.Write(writeBuffer.Bytes())
 	}))
 
 	port := os.Getenv("PORT")
