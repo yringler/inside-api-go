@@ -33,13 +33,14 @@ func main() {
 
 		requesterVersionDate := time.Unix(unixTime, 0)
 
-		currentDate, err := rdb.Get(ctx, "current_date").Time()
+		currentDateUnix, err := rdb.Get(ctx, "current_date").Int64()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			writeBuffer.WriteString(err.Error())
 			w.Write(writeBuffer.Bytes())
 			return
 		}
+		currentDate := time.Unix(currentDateUnix, 0)
 
 		if requesterVersionDate.Before(currentDate) {
 			http.Redirect(w, request, dataURL, http.StatusPermanentRedirect)
@@ -65,7 +66,7 @@ func main() {
 		queryTime := request.URL.Query().Get("date")
 		unixTime, _ := strconv.ParseInt(queryTime, 10, 64)
 		requesterVersionDate := time.Unix(unixTime, 0)
-		if response := rdb.Set(ctx, "current_date", requesterVersionDate, 0); response.Err() != nil {
+		if response := rdb.Set(ctx, "current_date", requesterVersionDate.Unix(), 0); response.Err() != nil {
 			fmt.Println(response.Err())
 		}
 	}))
