@@ -15,11 +15,21 @@ func main() {
 	ctx := context.Background()
 	redisURL := os.Getenv("REDIS_URL")
 	dataURL := os.Getenv("DATA_URL")
+	requiredVersion := os.Getenv("DATA_VERSION")
 	redisOptions, _ := redis.ParseURL(redisURL)
 	redisOptions.Username = ""
 	rdb := redis.NewClient(redisOptions)
 
+	// Only responds if version query shows that can handle latest data version.
+
 	http.Handle("/check", http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		if request.URL.Query().Get("v") != requiredVersion {
+			w.WriteHeader(http.StatusNoContent)
+			writeBuffer := bytes.Buffer{}
+			w.Write(writeBuffer.Bytes())
+			return
+		}
+
 		queryTime := request.URL.Query().Get("date")
 		requestersUnix, err := strconv.ParseInt(queryTime, 10, 64)
 		writeBuffer := bytes.Buffer{}
@@ -50,6 +60,13 @@ func main() {
 	password := os.Getenv("AUTH")
 
 	http.Handle("/update", http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		if request.URL.Query().Get("v") != requiredVersion {
+			w.WriteHeader(http.StatusNoContent)
+			writeBuffer := bytes.Buffer{}
+			w.Write(writeBuffer.Bytes())
+			return
+		}
+
 		writeBuffer := bytes.Buffer{}
 
 		requestPassword := request.URL.Query().Get("auth")
