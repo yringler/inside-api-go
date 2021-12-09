@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -15,6 +16,12 @@ func main() {
 	ctx := context.Background()
 	redisURL := os.Getenv("REDIS_URL")
 	dataURL := os.Getenv("DATA_URL")
+
+	// Make sure we redirect to a direct download
+	if strings.HasSuffix(dataURL, "=0") {
+		dataURL = strings.TrimSuffix(dataURL, "=0") + "=1"
+	}
+
 	requiredVersion := os.Getenv("DATA_VERSION")
 	redisOptions, _ := redis.ParseURL(redisURL)
 	redisOptions.Username = ""
